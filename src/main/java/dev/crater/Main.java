@@ -11,6 +11,7 @@ public class Main {
     private final static String Version = "0.0.1";
     public static Crater INSTANCE;
     public static void main(String[] args) {
+        args = new String[]{"-c", "./cfg.yml"};
         //ToDo:Graphic UI
         logger.info("Crater obfuscator by CraterTeam");
         logger.info(Version);

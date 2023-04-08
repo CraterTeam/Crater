@@ -1,0 +1,6 @@
+input: '.\test.jar'
+output: '.\out.jar'
+in:
+  out:
+    in:
+      out: 'nmsl'
