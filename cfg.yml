@@ -1,6 +1,28 @@
-input: '.\test.jar'
-output: '.\out.jar'
-in:
-  out:
-    in:
-      out: 'nmsl'
+input: '.\build\libs\Crater-1.0-SNAPSHOT-all.jar'
+output: '.\build\libs\Crater-1.0-SNAPSHOT-all.obf.jar'
+#从maven仓库直接下载依赖
+maven: 
+  - 'com.fasterxml.jackson.core:jackson-databind:2.15.0-rc2'
+  - 'commons-cli:commons-cli:1.5.0'
+  - 'org.yaml:snakeyaml:2.0'
+  - 'com.lmax:disruptor:3.4.4'
+  - 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0-rc2'
+  - 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.0-rc2'
+  - 'me.tongfei:progressbar:0.9.5'
+  - 'net.java.dev.jna:jna:5.13.0'
+  - 'com.fasterxml.jackson.core:jackson-core:2.15.0-rc2'
+  - 'com.fasterxml.jackson.core:jackson-annotations:2.15.0-rc2'
+#跳过Class检查 ***该操作可能导致保存class出现异常
+skipCheck: false
+#过滤Class 以下包名的class将不会被载入
+filter:
+  - 'org.apache'
+  - 'com.fasterxml'
+  - 'com.ctc'
+  - 'org.jline'
+  - 'org.codehaus'
+  - 'org.yaml'
+  - 'ch.randelshofer'
+  - 'com.lmax'
+  - 'me.tongfei'
+  - 'org.fusesource'

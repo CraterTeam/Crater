@@ -29,7 +29,12 @@ public class Main {
                 return;
             }
             if (commandLine.hasOption("config")) {
-                INSTANCE = new Crater(new File(commandLine.getOptionValue("config")));
+                try{
+                    INSTANCE = new Crater(new File(commandLine.getOptionValue("config")));
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return;
+                }
                 return;
             }
         }catch(Exception e){
