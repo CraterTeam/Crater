@@ -18,12 +18,16 @@ import org.objectweb.asm.tree.MethodNode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class Crater {
     private final static Logger logger = LogManager.getLogger("Crater");
@@ -31,6 +35,7 @@ public class Crater {
     private final List<ClassWrapper> classes = new ArrayList<>();
     private final List<ResourceWrapper> resources = new ArrayList<>();
     private final List<ClassWrapper> filteredClasses = new ArrayList<>();
+    private long originJarSize = 0;
     @Getter
     private URLClassLoader libClassLoader;
     public Crater(File configFile){
@@ -54,7 +59,47 @@ public class Crater {
             logger.error("An error occurred while checking the classes");
             return;
         }
+        logger.info("Classes checked");
     }
+    public void doObfuscate(){
+
+    }
+    public void saveJar(){
+        boolean verify = true;
+        if (config.containsKey("verifyClasses")){
+            verify = (boolean)config.get("verifyClasses");
+        }else {
+            verify = true;
+            logger.info("Verify classes is not set, default to true");
+        }
+        new File((String)config.get("output")).delete();
+        try {
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(new File((String)config.get("output"))));
+            for (ClassWrapper classWrapper : ProgressBar.wrap(classes,"Save classes")) {
+                ZipEntry entry = new ZipEntry(classWrapper.getClassInternalName() + ".class");
+                zos.putNextEntry(entry);
+                zos.write(classWrapper.getClassBytes(verify));
+            }
+            for (ClassWrapper filteredClass : ProgressBar.wrap(filteredClasses,"Save filtered classes")) {
+                ZipEntry entry = new ZipEntry(filteredClass.getOriginEntryName());
+                zos.putNextEntry(entry);
+                zos.write(filteredClass.getOriginBytes());
+            }
+            for (ResourceWrapper resource : ProgressBar.wrap(resources,"Save resources")) {
+                ZipEntry entry = new ZipEntry(resource.getOriginEntryName());
+                zos.putNextEntry(entry);
+                zos.write(resource.getBytes());
+            }
+            zos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("An error occurred while saving the jar");
+            return;
+        }
+        long newJarSize = new File((String) config.get("output")).length();
+        logger.info("Jar saved {} bytes({})",newJarSize,newJarSize < originJarSize ? "-"+(originJarSize-newJarSize) : "+"+(newJarSize-originJarSize));
+    }
+
     private boolean checkClasses(){
         if ((boolean)config.get("skipCheck")){
             logger.info("Classes check skipped");
@@ -100,6 +145,7 @@ public class Crater {
             logger.error("Input file not found");
             return false;
         }
+        originJarSize = new File((String) config.get("input")).length();
         List<String> filters = new ArrayList<>();
         if (config.containsKey("filter")){
             filters.addAll((Collection<? extends String>) config.get("filter"));

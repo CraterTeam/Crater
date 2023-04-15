@@ -31,6 +31,7 @@ public class Main {
             if (commandLine.hasOption("config")) {
                 try{
                     INSTANCE = new Crater(new File(commandLine.getOptionValue("config")));
+                    INSTANCE.saveJar();
                 }catch (Exception e){
                     e.printStackTrace();
                     return;

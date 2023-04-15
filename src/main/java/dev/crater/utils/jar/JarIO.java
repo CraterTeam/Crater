@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class JarIO {
     public static Map<String,byte[]> readJar(File file){
@@ -13,10 +14,14 @@ public class JarIO {
             ZipInputStream zis = new ZipInputStream(new FileInputStream(file));
             ZipEntry entry = null;
             while ((entry = zis.getNextEntry()) != null){
+                if (entry.isDirectory()) continue;
+                int len;
+                byte[] buffer = new byte[2048];
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                while (zis.available() != 0){
-                    bos.write(zis.read());
+                while ((len = zis.read(buffer)) > 0) {
+                    bos.write(buffer, 0, len);
                 }
+                System.out.println(entry.getName()+" "+bos.toByteArray().length);
                 map.put(entry.getName(),bos.toByteArray());
             }
             return map;
