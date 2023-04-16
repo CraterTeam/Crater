@@ -21,7 +21,6 @@ public class JarIO {
                 while ((len = zis.read(buffer)) > 0) {
                     bos.write(buffer, 0, len);
                 }
-                System.out.println(entry.getName()+" "+bos.toByteArray().length);
                 map.put(entry.getName(),bos.toByteArray());
             }
             return map;

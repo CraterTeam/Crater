@@ -1,14 +1,16 @@
 package dev.crater.utils.jar;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-public class ClassWrapper {
+public class ClassWrapper extends IWrapper{
     @Getter
     private final String originEntryName;
     @Getter
+    @Setter
     private ClassNode classNode;
     @Getter
     private final byte[] originBytes;

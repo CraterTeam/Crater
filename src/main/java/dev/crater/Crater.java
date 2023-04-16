@@ -1,5 +1,7 @@
 package dev.crater;
 
+import dev.crater.transformer.TransformManager;
+import dev.crater.transformer.Transformer;
 import dev.crater.utils.HTTPUtils;
 import dev.crater.utils.jar.ClassWrapper;
 import dev.crater.utils.ClassUtil;
@@ -18,12 +20,13 @@ import org.objectweb.asm.tree.MethodNode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -31,38 +34,53 @@ import java.util.zip.ZipOutputStream;
 
 public class Crater {
     private final static Logger logger = LogManager.getLogger("Crater");
-    private ConfigTree config;
-    private final List<ClassWrapper> classes = new ArrayList<>();
-    private final List<ResourceWrapper> resources = new ArrayList<>();
-    private final List<ClassWrapper> filteredClasses = new ArrayList<>();
-    private long originJarSize = 0;
     @Getter
-    private URLClassLoader libClassLoader;
+    private ConfigTree config;
+    @Getter
+    private final List<ClassWrapper> classes = new ArrayList<>();
+    @Getter
+    private final List<ResourceWrapper> resources = new ArrayList<>();
+    @Getter
+    private final List<ClassWrapper> filteredClasses = new ArrayList<>();
+    @Getter
+    private final List<ClassWrapper> librariesClasses = new ArrayList<>();
+    private long originJarSize = 0;
+    private TransformManager transformManager;
     public Crater(File configFile){
         if(!parseConfig(configFile) ||
                 !hasImportantConfig()){
             logger.error("An error occurred while parsing the configuration file");
-            return;
+            throw new RuntimeException();
         }
         logger.info("Loading library");
         if (!loadLibs()){
             logger.error("An error occurred while loading the library");
-            return;
+            throw new RuntimeException();
         }
         logger.info("Loading classes");
         if (!loadClasses()){
             logger.error("An error occurred while loading the classes");
-            return;
+            throw new RuntimeException();
         }
         logger.info(String.format("Loaded %d classes",classes.size()) +" "+filteredClasses.size()+" filtered");
         if (!checkClasses()){
             logger.error("An error occurred while checking the classes");
-            return;
+            throw new RuntimeException();
         }
         logger.info("Classes checked");
+        transformManager = new TransformManager();
     }
     public void doObfuscate(){
-
+        logger.info("Obfuscating");
+        for (Transformer transformer : ProgressBar.wrap(transformManager.getTransformers(),"Obfuscating")) {
+            if (!((boolean) (config.get(transformer.getName() + ".enable")))){
+                logger.info("Skip {}",transformer.getName());
+                continue;
+            }
+            logger.info("Executing transformer: {}",transformer.getName());
+            transformer.transform(classes);
+        }
+        logger.info("Obfuscating finished");
     }
     public void saveJar(){
         boolean verify = true;
@@ -106,13 +124,15 @@ public class Crater {
             return true;
         }
         List<String> missing = new ArrayList<>();
-        for (ClassWrapper cw : classes) {
+        for (ClassWrapper cw : ProgressBar.wrap(classes,"Checking")) {
             List<String> relatedClasses = getRelatedClasses(cw);
             relatedClasses.stream().filter(s -> s != null)
                     .map(ClassUtil::byInternalName)
                     .filter(s -> !(classes.stream().map(ClassWrapper::getClassName).collect(Collectors.toList()).contains(s)))
                     .filter(s -> !(filteredClasses.stream().map(ClassWrapper::getClassName).collect(Collectors.toList()).contains(s)))
-                    .filter(s -> !ClassUtil.hasClass(s,libClassLoader)).forEach(missing::add);
+                    .filter(s -> !(librariesClasses.stream().map(ClassWrapper::getClassName).collect(Collectors.toList()).contains(s)))
+                    .filter(s -> !(ClassUtil.hasClass(s)))
+                    .forEach(missing::add);
         }
         missing = missing.stream().distinct().collect(Collectors.toList());
         if (missing.size() > 0){
@@ -210,24 +230,17 @@ public class Crater {
                 libFiles.add(libFile);
             }
         }
-        for (File libFile : libFiles) {
-            try {
-                urls.add(libFile.toURI().toURL());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return false;
-            }
+        for (File libFile : ProgressBar.wrap(libFiles,"Loading libs")) {
+            loadLib(libFile);
         }
-        if (urls.size() == 0){
-            logger.info("No library to load");
-            return true;
-        }
-        for (URL url : urls) {
-            logger.info(url.getFile());
-        }
-        logger.info("Load "+urls.size()+" libraries");
-        libClassLoader = new URLClassLoader(urls.toArray(new URL[0]),ClassLoader.getSystemClassLoader());
         return true;
+    }
+    private void loadLib(File file){
+        JarIO.readJar(file).forEach((s, bytes) -> {
+            if (s.endsWith(".class")){
+                librariesClasses.add(new ClassWrapper(s,bytes));
+            }
+        });
     }
     private List<String> loadMavenLibs(){
         List<String> mavenLibs = (List<String>) config.get("maven");
@@ -294,6 +307,7 @@ public class Crater {
             logger.error("Read config file error",e);
             return false;
         }
+        config = new String(config.getBytes(Charset.forName("GBK")), StandardCharsets.UTF_8);
         Map<Object,Object> configMap = new Yaml().load(config);
         if (configMap == null){
             logger.error("Config file is empty");

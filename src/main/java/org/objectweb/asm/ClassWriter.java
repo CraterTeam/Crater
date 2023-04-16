@@ -27,6 +27,9 @@
 // THE POSSIBILITY OF SUCH DAMAGE.
 package org.objectweb.asm;
 
+import dev.crater.Crater;
+import dev.crater.utils.ClassUtil;
+
 /**
  * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
  * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
@@ -1037,6 +1040,13 @@ public class ClassWriter extends ClassVisitor {
    *     Type#getInternalName()}).
    */
   protected String getCommonSuperClass(final String type1, final String type2) {
+    {
+      //Overwrite
+      String commonSuperClass = ClassUtil.getCommonSuperClass(type1, type2);
+      if (commonSuperClass != null){
+        return commonSuperClass;
+      }
+    }
     ClassLoader classLoader = getClassLoader();
     Class<?> class1;
     try {

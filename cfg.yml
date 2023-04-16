@@ -28,3 +28,13 @@ filter:
   - 'com.lmax'
   - 'me.tongfei'
   - 'org.fusesource'
+#Transformer配置
+Name:
+  enable: true
+  newPackageName: 'loser.dont.crk'
+  filterRule: 'obf.rule'
+  dictionary:
+    name: 'Custom'
+    word: '理塘丁真'
+    length: 20
+  export: "name.map"
