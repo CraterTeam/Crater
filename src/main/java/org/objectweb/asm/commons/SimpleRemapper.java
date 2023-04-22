@@ -93,12 +93,19 @@ public class SimpleRemapper extends Remapper {
 
   @Override
   public String mapFieldName(final String owner, final String name, final String descriptor) {
-    String remappedName = map(owner + '.' + name);
+    String remappedName = map(owner.replace("$","/") + '.' + name);
+    if (remappedName == null)
+    System.out.println("null "+owner+" "+name);
     return remappedName == null ? name : remappedName;
   }
 
   @Override
   public String map(final String key) {
-    return mapping.get(key);
+    for (Map.Entry<String, String> entry : mapping.entrySet()) {
+      if (entry.getKey().equals(key)) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 }

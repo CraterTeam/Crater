@@ -1,3 +1,5 @@
 class dev.crater.utils.ClassUtil
     <keepClassName>
     byInternalName(Ljava/lang/String;)Ljava/lang/String;
+class org.objectweb.asm.tree.AbstractInsnNode
+    <keepClassName>

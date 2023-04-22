@@ -34,8 +34,7 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-//ToDo: Support for inner classes
-//ToDo: Support for no-modifier {@see https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html}
+//ToDo: Add support for InnerClasses
 public class NameTransformer extends Transformer {
     private final static Logger logger = LogManager.getLogger("NameTransformer");
     private Map<String,List<String>> filterRules = new HashMap<>();
@@ -52,168 +51,10 @@ public class NameTransformer extends Transformer {
             generateClassMap(classWrapper,preparse,cw,crater);
         }
         logger.info("Generating names");
-        /*for (int i = 0; i < cw.size(); i++) {
-            ClassWrapper clazz = cw.get(i);
-            if (filtered(clazz)){
-                preparse.add(new NoChangeNode(clazz));
-            }else {
-                preparse.add(new NoNameNode(clazz));
-            }
-            {
-                for (int x = 0; x < clazz.getClassNode().fields.size(); x++) {
-                    FieldNode field = clazz.getClassNode().fields.get(x);
-                    boolean skip = false;
-                    if (filtered(clazz,field)){
-                        preparse.add(new NoChangeNode(new FieldWrapper(clazz,field)));
-                    }else {
-                        preparse.add(new NoNameNode(new FieldWrapper(clazz,field)));
-                        //Support for protected fields
-                        if ((field.access & Opcodes.ACC_PROTECTED) != 0){
-                            List<ClassWrapper> child = new ArrayList<>();
-                            for (int y = 0; y < cw.size(); y++) {
-                                ClassWrapper current = cw.get(y);
-                                ClassWrapper parent = current;
-                                boolean isChild = false;
-                                while (parent != null){
-                                    ClassWrapper find = parent;
-                                    parent = null;
-                                    for (int z = 0; z < cw.size(); z++) {
-                                        if (find.getClassInternalName().equals(clazz.getClassInternalName())){
-                                            isChild = true;
-                                            break;
-                                        }
-                                        if (cw.get(z).getClassInternalName().equals(find.getClassNode().superName)){
-                                            parent = cw.get(z);
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (isChild){
-                                    child.add(current);
-                                }
-                            }
-                            for (ClassWrapper classWrapper : child) {
-                                preparse.add(new ProtectedNode(classWrapper,new FieldWrapper(clazz,field)));
-                            }
-                        }
-                    }
-                }
-                for (int x = 0; x < clazz.getClassNode().methods.size(); x++) {
-                    MethodNode method = clazz.getClassNode().methods.get(x);
-                    if (filtered(clazz,method)){
-                        preparse.add(new NoChangeNode(new MethodWrapper(clazz,method)));
-                    }else {
-                        List<String> inherit = new ArrayList<>();
-                        inherit.add(clazz.getClassNode().superName);
-                        clazz.getClassNode().interfaces.forEach(inherit::add);
-                        boolean isInherited = false;
-                        for (String parent : inherit) {
-                            if (parent != null) {
-                                //find in class list
-                                for (int y = 0; y < cw.size(); y++) {
-                                    ClassWrapper testClass = cw.get(y);
-                                    if (testClass.getClassInternalName().equals(parent)){
-                                        for (int z = 0; z < testClass.getClassNode().methods.size(); z++) {
-                                            MethodNode testMethod = testClass.getClassNode().methods.get(z);
-                                            if (testMethod.name.equals(method.name) && testMethod.desc.equals(method.desc)){
-                                                preparse.add(new InheritNode(new MethodWrapper(clazz,method),new MethodWrapper(testClass,testMethod)));
-                                                isInherited = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (isInherited) break;
-                                //find in filtered class list
-                                for (int y = 0; y < crater.getFilteredClasses().size(); y++) {
-                                    ClassWrapper testClass = crater.getFilteredClasses().get(y);
-                                    if (testClass.getClassInternalName().equals(parent)){
-                                        for (int z = 0; z < testClass.getClassNode().methods.size(); z++) {
-                                            MethodNode testMethod = new MethodNode();
-                                            if (testMethod.name.equals(method.name) && testMethod.desc.equals(method.desc)){
-                                                preparse.add(new NoChangeNode(new MethodWrapper(clazz,method)));
-                                                isInherited = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (isInherited) break;
-                                //find in library class list
-                                for (int y = 0; y < crater.getLibrariesClasses().size(); y++) {
-                                    ClassWrapper testClass = crater.getLibrariesClasses().get(y);
-                                    if (testClass.getClassInternalName().equals(parent)){
-                                        for (int z = 0; z < testClass.getClassNode().methods.size(); z++) {
-                                            MethodNode testMethod = new MethodNode();
-                                            if (testMethod.name.equals(method.name) && testMethod.desc.equals(method.desc)){
-                                                preparse.add(new NoChangeNode(new MethodWrapper(clazz,method)));
-                                                isInherited = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (isInherited) break;
-                                //find in jvm
-                                {
-                                    String current = parent;
-                                    while (!current.equals("java/lang/Object")){
-                                        try {
-                                            Class cls = Class.forName(current.replace("/","."));
-                                            for (Method method1 : cls.getDeclaredMethods()) {
-                                                if (method1.getName().equals(method.name) && Type.getMethodDescriptor(method1).equals(method.desc)){
-                                                    preparse.add(new NoChangeNode(new MethodWrapper(clazz,method)));
-                                                    isInherited = true;
-                                                }
-                                            }
-                                            if (cls.getSuperclass() == null)
-                                                break;
-                                            current = Type.getInternalName(cls.getSuperclass());
-                                        } catch (ClassNotFoundException e) {
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (!isInherited){
-                            preparse.add(new NoNameNode(new MethodWrapper(clazz,method)));
-                        }
-                        if ((method.access & Opcodes.ACC_PROTECTED) != 0){
-                            List<ClassWrapper> child = new ArrayList<>();
-                            for (int y = 0; y < cw.size(); y++) {
-                                ClassWrapper current = cw.get(y);
-                                ClassWrapper parent = current;
-                                boolean isChild = false;
-                                while (parent != null){
-                                    ClassWrapper find = parent;
-                                    parent = null;
-                                    for (int z = 0; z < cw.size(); z++) {
-                                        if (find.getClassInternalName().equals(clazz.getClassInternalName())){
-                                            isChild = true;
-                                            break;
-                                        }
-                                        if (cw.get(z).getClassInternalName().equals(find.getClassNode().superName)){
-                                            parent = cw.get(z);
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (isChild){
-                                    child.add(current);
-                                }
-                            }
-                            for (ClassWrapper classWrapper : child) {
-                                preparse.add(new ProtectedNode(classWrapper,new MethodWrapper(clazz,method)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-         */
         Map<String,String> map = new HashMap<>();
         Dictionary dictionary = null;
         for (Dictionary dictionary1 : Dictionary.getDictionaries()) {
-            if (dictionary1.getName().equals((String) (Main.INSTANCE.getConfig().get("Name.dictionary.name")))) dictionary = dictionary1;
+            if (dictionary1.getName().equals(Main.INSTANCE.getConfig().get("Name.dictionary.name"))) dictionary = dictionary1;
         }
         if (dictionary == null){
             throw new RuntimeException("Dictionary not found!");
@@ -470,8 +311,106 @@ public class NameTransformer extends Transformer {
                 maps.add(new NoChangeNode(new MethodWrapper(cw,methodNode)));
             }
         }
+        for (FieldNode field : cw.getClassNode().fields) {
+            if (!filtered(cw,field)){
+                generateFieldMap(new FieldWrapper(cw,field),maps,classes,crater);
+            }else {
+                maps.add(new NoChangeNode(new FieldWrapper(cw,field)));
+            }
+        }
+    }
+    private void generateFieldMap(FieldWrapper fw,List<MapNode> maps,List<ClassWrapper> classes,Crater crater){
+        maps.add(new NoNameNode(fw));
+        //Support for protected fields
+        if ((fw.getFieldNode().access & Opcodes.ACC_PROTECTED) != 0){
+            List<ClassWrapper> child = new ArrayList<>();
+            for (int y = 0; y < classes.size(); y++) {
+                ClassWrapper current = classes.get(y);
+                ClassWrapper parent = current;
+                boolean isChild = false;
+                while (parent != null){
+                    ClassWrapper find = parent;
+                    parent = null;
+                    for (int z = 0; z < classes.size(); z++) {
+                        if (find.getClassInternalName().equals(fw.getClassWrapper().getClassInternalName())){
+                            isChild = true;
+                            break;
+                        }
+                        if (classes.get(z).getClassInternalName().equals(find.getClassNode().superName)){
+                            parent = classes.get(z);
+                            break;
+                        }
+                    }
+                }
+                if (isChild){
+                    child.add(current);
+                }
+            }
+            for (ClassWrapper classWrapper : child) {
+                maps.add(new ProtectedNode(classWrapper,fw));
+            }
+        }
     }
     private void generateMethodMap(MethodWrapper mw,List<MapNode> maps,List<ClassWrapper> classes,Crater crater){
+        List<ClassWrapper> merged = new ArrayList<>();
+        merged.addAll(crater.getLibrariesClasses());
+        merged.addAll(crater.getFilteredClasses());
+        merged.addAll(crater.getClasses());
+        if ((mw.getMethodNode().access & Opcodes.ACC_PROTECTED) != 0){
+            List<ClassWrapper> child = new ArrayList<>();
+            for (int y = 0; y < classes.size(); y++) {
+                ClassWrapper current = classes.get(y);
+                ClassWrapper parent = current;
+                boolean isChild = false;
+                while (parent != null){
+                    ClassWrapper find = parent;
+                    parent = null;
+                    for (int z = 0; z < classes.size(); z++) {
+                        if (find.getClassInternalName().equals(mw.getClassWrapper().getClassInternalName())){
+                            isChild = true;
+                            break;
+                        }
+                        if (classes.get(z).getClassInternalName().equals(find.getClassNode().superName)){
+                            parent = classes.get(z);
+                            break;
+                        }
+                    }
+                }
+                if (isChild){
+                    child.add(current);
+                }
+            }
+            for (ClassWrapper classWrapper : child) {
+                maps.add(new ProtectedNode(classWrapper,mw));
+            }
+        }
+        for (String interfaceClass : mw.getClassWrapper().getClassNode().interfaces) {
+            ClassWrapper inter = findClass(interfaceClass,merged);
+            if (inter != null){
+                for (int i = 0; i < inter.getClassNode().methods.size(); i++) {
+                    MethodNode methodNode = inter.getClassNode().methods.get(i);
+                    if (methodNode.name.equals(mw.getMethodNode().name) && methodNode.desc.equals(mw.getMethodNode().desc)){
+                        if (isModifiable(inter.getClassInternalName(),classes)){
+                            maps.add(new InheritNode(mw,new MethodWrapper(inter,methodNode)));
+                        }else {
+                            maps.add(new NoChangeNode(mw));
+                        }
+                        return;
+                    }
+                }
+            }
+            try {
+                Class<?> interClass = Class.forName(interfaceClass.replace("/","."));
+                for (Method method : interClass.getMethods()) {
+                    if (method.getName().equals(mw.getMethodNode().name) && Type.getMethodDescriptor(method).equals(mw.getMethodNode().desc)){
+                        maps.add(new NoChangeNode(mw));
+                        return;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
         Object superClass = mw.getClassWrapper();
         while ((superClass = getSuper(superClass,crater)) != null){
             if (superClass instanceof ClassWrapper){
