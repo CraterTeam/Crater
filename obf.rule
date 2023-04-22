@@ -1,0 +1,3 @@
+class dev.crater.utils.ClassUtil
+    <keepClassName>
+    byInternalName(Ljava/lang/String;)Ljava/lang/String;

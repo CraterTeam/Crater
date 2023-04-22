@@ -350,7 +350,7 @@ public class NameTransformer extends Transformer {
                     for (int i = 0; i < new ArrayList<>(map.entrySet()).size(); i++) {
                         Map.Entry<String, String> entry = new ArrayList<>(map.entrySet()).get(i);
                         if (entry.getKey().equals(newClassWrapper.getClassInternalName())){
-                            map.put(classWrapper.getClassInternalName(),getPackage(newClassWrapper.getClassInternalName())+"/"+ dictionary.getWord(WordType.TypeName));
+                            map.put(classWrapper.getClassInternalName(),getPackage(entry.getValue())+"/"+ dictionary.getWord(WordType.TypeName));
                             preparse.remove(0);
                             isFound = true;
                             break;
@@ -464,7 +464,11 @@ public class NameTransformer extends Transformer {
             }
         }
         for (MethodNode methodNode : cw.getClassNode().methods) {
-            generateMethodMap(new MethodWrapper(cw,methodNode),maps,classes,crater);
+            if (!filtered(cw,methodNode)){
+                generateMethodMap(new MethodWrapper(cw,methodNode),maps,classes,crater);
+            }else {
+                maps.add(new NoChangeNode(new MethodWrapper(cw,methodNode)));
+            }
         }
     }
     private void generateMethodMap(MethodWrapper mw,List<MapNode> maps,List<ClassWrapper> classes,Crater crater){
