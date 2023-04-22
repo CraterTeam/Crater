@@ -22,9 +22,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -46,11 +44,19 @@ public class Crater {
     private final List<ClassWrapper> librariesClasses = new ArrayList<>();
     private long originJarSize = 0;
     private TransformManager transformManager;
+    @Getter
+    private boolean debug = false;
     public Crater(File configFile){
         if(!parseConfig(configFile) ||
                 !hasImportantConfig()){
             logger.error("An error occurred while parsing the configuration file");
             throw new RuntimeException();
+        }
+        if (config.containsKey("debug")){
+            debug = (boolean) config.get("debug");
+            if (debug){
+                logger.info("Debug mode enabled");
+            }
         }
         logger.info("Loading library");
         if (!loadLibs()){
@@ -78,7 +84,7 @@ public class Crater {
                 continue;
             }
             logger.info("Executing transformer: {}",transformer.getName());
-            transformer.transform(classes);
+            transformer.transform(classes,this);
         }
         logger.info("Obfuscating finished");
     }

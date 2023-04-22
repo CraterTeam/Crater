@@ -6,6 +6,9 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ClassWrapper extends IWrapper{
     @Getter
     private final String originEntryName;
@@ -16,6 +19,8 @@ public class ClassWrapper extends IWrapper{
     private final byte[] originBytes;
     @Getter
     private String originName;
+    @Getter
+    private List<String> inherits = new ArrayList<>();
     public ClassWrapper(String originEntryName, byte[] bytes) {
         this.originEntryName = originEntryName;
         originBytes = bytes;
@@ -34,5 +39,12 @@ public class ClassWrapper extends IWrapper{
         ClassWriter cw = new ClassWriter(verify ? ClassWriter.COMPUTE_FRAMES : 0);
         classNode.accept(cw);
         return cw.toByteArray();
+    }
+    public boolean equals(Object o){
+        if (o instanceof ClassWrapper){
+            ClassWrapper cw = (ClassWrapper) o;
+            return cw.getClassName().equals(getClassName());
+        }
+        return super.equals(o);
     }
 }

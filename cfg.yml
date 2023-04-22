@@ -1,5 +1,7 @@
 input: '.\build\libs\Crater-1.0-SNAPSHOT-all.jar'
 output: '.\build\libs\Crater-1.0-SNAPSHOT-all.obf.jar'
+#输出debug日志
+debug: true
 #从maven仓库直接下载依赖
 maven: 
   - 'com.fasterxml.jackson.core:jackson-databind:2.15.0-rc2'
@@ -35,6 +37,6 @@ Name:
   filterRule: 'obf.rule'
   dictionary:
     name: 'Custom'
-    word: '理塘丁真'
+    word: 'MWN'
     length: 20
   export: "name.map"

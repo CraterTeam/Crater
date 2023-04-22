@@ -1,5 +1,6 @@
 package dev.crater.transformer;
 
+import dev.crater.Crater;
 import dev.crater.utils.jar.ClassWrapper;
 import lombok.Getter;
 
@@ -11,5 +12,5 @@ public abstract class Transformer {
     public Transformer(String name) {
         this.name = name;
     }
-    public abstract void transform(List<ClassWrapper> cw);
+    public abstract void transform(List<ClassWrapper> cw, Crater crater);
 }
