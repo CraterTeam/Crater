@@ -1,4 +1,6 @@
 package dev.crater.utils.jar;
 
-public class IWrapper {
+import org.objectweb.asm.Opcodes;
+
+public class IWrapper implements Opcodes {
 }

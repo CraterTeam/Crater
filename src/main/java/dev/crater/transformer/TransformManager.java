@@ -1,6 +1,6 @@
 package dev.crater.transformer;
 
-import dev.crater.transformer.transformers.NameTransformer;
+import dev.crater.transformer.transformers.Renamer;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +14,7 @@ public class TransformManager {
     private final List<Transformer> transformers = new ArrayList<>();
     public TransformManager(){
         logger.info("TransformManager init");
-        loadTransformer(new NameTransformer());
+        loadTransformer(new Renamer());
     }
     public void loadTransformer(Transformer transformer){
         transformers.add(transformer);

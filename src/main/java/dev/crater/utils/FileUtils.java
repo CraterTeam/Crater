@@ -28,6 +28,23 @@ public class FileUtils {
         url = group.replace(".","/")+"/"+artifact+"/"+version+"/"+artifact+"-"+version+".jar";
         return url;
     }
+    public static String renameExistingFile(File existing) {
+        try {
+            int i = 0;
+            while (true) {
+                i++;
+                String newName = existing.getAbsolutePath() + ".BACKUP-" + i;
+                File backUpName = new File(newName);
+                if (!backUpName.exists()) {
+                    existing.renameTo(backUpName);
+                    return newName;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+            throw new RuntimeException(String.format("Could not backup \"%s\"", existing.getAbsolutePath()));
+        }
+    }
     public static String getPath(String pathWithFileName){
         String[] split = pathWithFileName.split("/");
         StringBuilder sb = new StringBuilder();

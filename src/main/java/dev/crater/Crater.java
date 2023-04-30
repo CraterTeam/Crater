@@ -18,10 +18,12 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.yaml.snakeyaml.Yaml;
+import sun.misc.Launcher;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +47,7 @@ public class Crater {
     private long originJarSize = 0;
     private TransformManager transformManager;
     @Getter
-    private boolean debug = false;
+    private static boolean debug = false;
     public Crater(File configFile){
         if(!parseConfig(configFile) ||
                 !hasImportantConfig()){
@@ -74,9 +76,46 @@ public class Crater {
             throw new RuntimeException();
         }
         logger.info("Classes checked");
-        transformManager = new TransformManager();
     }
+    private void buildHierarchy(ClassWrapper wrapper, ClassWrapper sub, Set<String> visited) {
+        if (visited.add(wrapper.getClassInternalName())) {
+            if (wrapper.getSuperName() != null) {
+                ClassWrapper superParent = getClasspathWrapper(wrapper.getSuperName());
+                wrapper.getParents().add(superParent);
+                buildHierarchy(superParent, wrapper, visited);
+            }
+            if (wrapper.getInterfaces() != null) {
+                wrapper.getInterfaces().forEach(interfaceName -> {
+                    ClassWrapper interfaceParent = getClasspathWrapper(interfaceName);
+                    wrapper.getParents().add(interfaceParent);
+                    buildHierarchy(interfaceParent, wrapper, visited);
+                });
+            }
+        }
+        if (sub != null) {
+            wrapper.getChildren().add(sub);
+        }
+    }
+    public ClassWrapper getClasspathWrapper(String name) {
+        for (ClassWrapper aClass : classes) {
+            if (aClass.getClassInternalName().equals(name)) {
+                return aClass;
+            }
+        }
+        for (ClassWrapper librariesClass : librariesClasses) {
+            if (librariesClass.getClassInternalName().equals(name)) {
+                return librariesClass;
+            }
+        }
+        throw new RuntimeException("Missing library class: " + name);
+    }
+    public void buildHierarchyGraph() {
+        HashSet<String> visited = new HashSet<>();
+        classes.forEach(wrapper -> buildHierarchy(wrapper, null, visited));
+    }
+
     public void doObfuscate(){
+        transformManager = new TransformManager();
         logger.info("Obfuscating");
         for (Transformer transformer : ProgressBar.wrap(transformManager.getTransformers(),"Obfuscating")) {
             if (!((boolean) (config.get(transformer.getName() + ".enable")))){
@@ -86,7 +125,7 @@ public class Crater {
             logger.info("Executing transformer: {}",transformer.getName());
             transformer.transform(classes,this);
         }
-        logger.info("Obfuscating finished");
+        logger.info("Obfuscate finished");
     }
     public void saveJar(){
         boolean verify = true;
@@ -110,7 +149,7 @@ public class Crater {
                 zos.write(filteredClass.getOriginBytes());
             }
             for (ResourceWrapper resource : ProgressBar.wrap(resources,"Save resources")) {
-                ZipEntry entry = new ZipEntry(resource.getOriginEntryName());
+                ZipEntry entry = new ZipEntry(resource.getEntryName());
                 zos.putNextEntry(entry);
                 zos.write(resource.getBytes());
             }
@@ -209,6 +248,17 @@ public class Crater {
     }
     private boolean loadLibs(){
         List<File> libFiles = new ArrayList<>();
+        logger.info("");
+        URL[] urLs = Launcher.getBootstrapClassPath().getURLs();
+        for (URL urL : urLs) {
+            try {
+                if (new File(urL.toURI()).isFile()){
+                    libFiles.add(new File(urL.toURI()));
+                }
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
         List<URL> urls = new ArrayList<>();
         if (config.containsKey("maven")){
             logger.info("Loading maven libraries");
@@ -244,7 +294,7 @@ public class Crater {
     private void loadLib(File file){
         JarIO.readJar(file).forEach((s, bytes) -> {
             if (s.endsWith(".class")){
-                librariesClasses.add(new ClassWrapper(s,bytes));
+                librariesClasses.add(new ClassWrapper(s,bytes,true));
             }
         });
     }

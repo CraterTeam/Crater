@@ -2,7 +2,6 @@ package dev.crater;
 
 import dev.crater.transformer.TransformManager;
 import dev.crater.transformer.Transformer;
-import dev.crater.utils.dictionary.WordType;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
