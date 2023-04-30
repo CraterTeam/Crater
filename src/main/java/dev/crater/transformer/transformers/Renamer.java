@@ -334,9 +334,9 @@ public class Renamer extends Transformer {
                     if (rule.startsWith("class")){
                         if (currentClass != null){
                             filterRules.put(currentClass,filterRule);
-                            filterRule.clear();
                         }
                         currentClass = rule.split(" ")[1];
+                        filterRule.clear();
                     }else {
                         filterRule.add(rule.trim());
                     }

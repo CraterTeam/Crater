@@ -1,5 +1,5 @@
 input: '.\build\libs\Crater-1.0-SNAPSHOT-all.jar'
-output: '.\build\libs\Crater-1.0-SNAPSHOT-all.obf1.jar'
+output: '.\build\libs\Crater-1.0-SNAPSHOT-all.obf.jar'
 #输出debug日志
 debug: true
 #从maven仓库直接下载依赖
@@ -53,3 +53,8 @@ Name:
         - '20'
   export: "mappings.txt"
   renameNative: true
+Source:
+  enable: true
+  newSource: 'Protected by Crater'
+Collapse:
+  enable: true

@@ -118,7 +118,7 @@ public class Crater {
         transformManager = new TransformManager();
         logger.info("Obfuscating");
         for (Transformer transformer : ProgressBar.wrap(transformManager.getTransformers(),"Obfuscating")) {
-            if (!((boolean) (config.get(transformer.getName() + ".enable")))){
+            if (!config.containsKey(transformer.getName() + ".enable") || !((boolean) (config.get(transformer.getName() + ".enable")))){
                 logger.info("Skip {}",transformer.getName());
                 continue;
             }
