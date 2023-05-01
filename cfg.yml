@@ -53,8 +53,23 @@ Name:
         - '20'
   export: "mappings.txt"
   renameNative: true
+#更改SourceFile
 Source:
   enable: true
   newSource: 'Protected by Crater'
+#移除部分class信息
 Collapse:
   enable: true
+#隐藏函数和变量(某些反编译可用)
+Hider:
+  enable: true
+  method: true
+  field:  true
+#数字混淆
+Number:
+  enable: true
+#指令变异
+Mutations:
+  enable: true
+  #触发概率
+  percent: 1

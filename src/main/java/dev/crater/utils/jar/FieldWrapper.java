@@ -35,4 +35,13 @@ public class FieldWrapper extends IWrapper{
         }
         return fieldWrappers;
     }
+    public boolean isSynthetic(){
+        return (fieldNode.access & Opcodes.ACC_SYNTHETIC) != 0;
+    }
+    public int getAccess(){
+        return fieldNode.access;
+    }
+    public void setAccess(int access){
+        fieldNode.access = access;
+    }
 }

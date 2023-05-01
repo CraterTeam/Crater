@@ -30,11 +30,23 @@ public class MethodWrapper extends IWrapper{
     public boolean isNative(){
         return (methodNode.access & Opcodes.ACC_NATIVE) != 0;
     }
+    public boolean isSynthetic(){
+        return (methodNode.access & Opcodes.ACC_SYNTHETIC) != 0;
+    }
+    public boolean isBridge(){
+        return (methodNode.access & Opcodes.ACC_BRIDGE) != 0;
+    }
     public static List<MethodWrapper> wrap(ClassWrapper cw){
         List<MethodWrapper> methodWrappers = new ArrayList<>();
         for (MethodNode method : cw.getClassNode().methods) {
             methodWrappers.add(new MethodWrapper(cw,method));
         }
         return methodWrappers;
+    }
+    public int getAccess(){
+        return methodNode.access;
+    }
+    public void setAccess(int access){
+        methodNode.access = access;
     }
 }

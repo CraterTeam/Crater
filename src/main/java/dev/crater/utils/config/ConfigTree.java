@@ -23,4 +23,7 @@ public class ConfigTree extends HashMap<String,Object> {
         }
         return newMap;
     }
+    public boolean getBoolean(String key){
+        return containsKey(key) && (boolean) get(key);
+    }
 }
