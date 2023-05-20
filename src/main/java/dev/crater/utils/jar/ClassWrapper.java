@@ -1,15 +1,13 @@
 package dev.crater.utils.jar;
 
+import dev.crater.utils.CraterClassWriter;
 import lombok.Getter;
 import lombok.Setter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -46,6 +44,10 @@ public class ClassWrapper extends IWrapper{
         methods = MethodWrapper.wrap(this);
         fields = FieldWrapper.wrap(this);
     }
+    public void wrap(){
+        methods = MethodWrapper.wrap(this);
+        fields = FieldWrapper.wrap(this);
+    }
     public ClassWrapper(String originEntryName, byte[] bytes,boolean library){
         this(originEntryName,bytes);
         this.library = library;
@@ -63,7 +65,7 @@ public class ClassWrapper extends IWrapper{
         return classNode.interfaces;
     }
     public byte[] getClassBytes(boolean verify){
-        ClassWriter cw = new ClassWriter(verify ? ClassWriter.COMPUTE_FRAMES : 0);
+        ClassWriter cw = new CraterClassWriter(verify ? ClassWriter.COMPUTE_FRAMES : 0);
         classNode.accept(cw);
         return cw.toByteArray();
     }
@@ -82,5 +84,8 @@ public class ClassWrapper extends IWrapper{
     }
     public boolean isEnum(){
         return (classNode.access & Opcodes.ACC_ENUM) != 0;
+    }
+    public boolean isInterface(){
+        return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
     }
 }

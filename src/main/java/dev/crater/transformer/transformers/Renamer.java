@@ -227,13 +227,8 @@ public class Renamer extends Transformer {
                 ClassNode newClassNode = new ClassNode();
                 ClassRemapper classRemapper = new ClassRemapper(newClassNode,remapper);
                 cw.getClassNode().accept(classRemapper);
-                IntStream.range(0, newClassNode.methods.size()).forEach(i -> {
-                    cw.getMethods().get(i).setMethodNode(newClassNode.methods.get(i));
-                });
-                IntStream.range(0, newClassNode.fields.size()).forEach(i -> {
-                    cw.getFields().get(i).setFieldNode(newClassNode.fields.get(i));
-                });
                 cw.setClassNode(newClassNode);
+                cw.wrap();
                 pb.step();
             });
         }

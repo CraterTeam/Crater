@@ -46,6 +46,9 @@ public class MethodWrapper extends IWrapper{
     public int getAccess(){
         return methodNode.access;
     }
+    public boolean hasInstructions() {
+        return methodNode.instructions != null && methodNode.instructions.size() > 0;
+    }
     public void setAccess(int access){
         methodNode.access = access;
     }

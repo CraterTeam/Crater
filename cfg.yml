@@ -73,3 +73,10 @@ Mutations:
   enable: true
   #触发概率
   percent: 1
+#控制流
+Flow:
+  enable: true
+  #控制块数量因子 控制块数量=函数指令数*控制块数量因子
+  blockSizeFactor: 0.1
+  #最少控制块数量
+  minimumBlockSize: 2

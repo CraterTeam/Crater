@@ -1040,13 +1040,6 @@ public class ClassWriter extends ClassVisitor {
    *     Type#getInternalName()}).
    */
   protected String getCommonSuperClass(final String type1, final String type2) {
-    {
-      //Overwrite
-      String commonSuperClass = ClassUtil.getCommonSuperClass(type1, type2);
-      if (commonSuperClass != null){
-        return commonSuperClass;
-      }
-    }
     ClassLoader classLoader = getClassLoader();
     Class<?> class1;
     try {

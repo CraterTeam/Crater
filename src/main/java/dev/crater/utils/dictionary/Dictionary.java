@@ -30,7 +30,7 @@ public abstract class Dictionary {
         return sb.toString();
     }
 
-    static String randomString(char[] charset, int length) {
+    public static String randomString(char[] charset, int length) {
         int charsetLength = charset.length;
         char[] buf = new char[length];
 

@@ -98,18 +98,18 @@ public class Number extends Transformer {
                         newInsn.add(insns);
                         continue;
                     }
-                    if (ClassUtil.isDoubleInsn(instruction)) {
-                        InsnList insns = obfuscateNumber(ClassUtil.getDoubleFromInsn(instruction));
-
-                        newInsn.add(insns);
-                        continue;
-                    }
-                    if (ClassUtil.isFloatInsn(instruction)) {
-                        InsnList insns = obfuscateNumber(ClassUtil.getFloatFromInsn(instruction));
-
-                        newInsn.add(insns);
-                        continue;
-                    }
+//                    if (ClassUtil.isDoubleInsn(instruction)) {
+//                        InsnList insns = obfuscateNumber(ClassUtil.getDoubleFromInsn(instruction));
+//
+//                        newInsn.add(insns);
+//                        continue;
+//                    }
+//                    if (ClassUtil.isFloatInsn(instruction)) {
+//                        InsnList insns = obfuscateNumber(ClassUtil.getFloatFromInsn(instruction));
+//
+//                        newInsn.add(insns);
+//                        continue;
+//                    }
                     newInsn.add(instruction);
                 }
                 method.getMethodNode().instructions = newInsn;

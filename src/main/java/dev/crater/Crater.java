@@ -2,6 +2,7 @@ package dev.crater;
 
 import dev.crater.transformer.TransformManager;
 import dev.crater.transformer.Transformer;
+import dev.crater.utils.ClassTree;
 import dev.crater.utils.HTTPUtils;
 import dev.crater.utils.jar.ClassWrapper;
 import dev.crater.utils.ClassUtil;
@@ -44,6 +45,7 @@ public class Crater {
     private final List<ClassWrapper> filteredClasses = new ArrayList<>();
     @Getter
     private final List<ClassWrapper> librariesClasses = new ArrayList<>();
+    private Map<String, ClassTree> hierarchy = new HashMap<>();
     private long originJarSize = 0;
     private TransformManager transformManager;
     @Getter
@@ -97,6 +99,7 @@ public class Crater {
         }
     }
     public ClassWrapper getClasspathWrapper(String name) {
+        if (name == null) return null;
         for (ClassWrapper aClass : classes) {
             if (aClass.getClassInternalName().equals(name)) {
                 return aClass;
@@ -372,4 +375,62 @@ public class Crater {
         this.config = ConfigTree.toTree(configMap);
         return true;
     }
+    public ClassTree getTree(String ref) {
+        if (!hierarchy.containsKey(ref)) {
+            ClassWrapper wrapper = getClasspathWrapper(ref);
+            buildHierarchy(wrapper, null);
+        }
+
+        return hierarchy.get(ref);
+    }
+
+    private void buildHierarchy(ClassWrapper wrapper, ClassWrapper sub) {
+        if (hierarchy.get(wrapper.getClassInternalName()) == null) {
+            ClassTree tree = new ClassTree(wrapper);
+
+            if (wrapper.getSuperName() != null) {
+                tree.getParentClasses().add(wrapper.getSuperName());
+
+                buildHierarchy(getClasspathWrapper(wrapper.getSuperName()), wrapper);
+            }
+            if (wrapper.getInterfaces() != null)
+                wrapper.getInterfaces().forEach(s -> {
+                    tree.getParentClasses().add(s);
+
+                    buildHierarchy(getClasspathWrapper(s), wrapper);
+                });
+
+            hierarchy.put(wrapper.getClassInternalName(), tree);
+        }
+
+        if (sub != null)
+            hierarchy.get(wrapper.getClassInternalName()).getSubClasses().add(sub.getClassInternalName());
+    }
+    public boolean isAssignableFrom(String type1, String type2) throws Exception {
+        if ("java/lang/Object".equals(type1))
+            return true;
+        if (type1.equals(type2))
+            return true;
+
+        getClasspathWrapper(type1);
+        getClasspathWrapper(type2);
+
+        ClassTree firstTree = getTree(type1);
+        if (firstTree == null)
+            throw new Exception("Could not find " + type1 + " in the built class hierarchy");
+
+        Set<String> allChildren = new HashSet<>();
+        Deque<String> toProcess = new ArrayDeque<>(firstTree.getSubClasses());
+        while (!toProcess.isEmpty()) {
+            String s = toProcess.poll();
+
+            if (allChildren.add(s)) {
+                getClasspathWrapper(s);
+                ClassTree tempTree = getTree(s);
+                toProcess.addAll(tempTree.getSubClasses());
+            }
+        }
+        return allChildren.contains(type2);
+    }
+
 }
